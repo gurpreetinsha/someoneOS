@@ -13,12 +13,12 @@ import { Button } from "@/components/ui/button";
 
 export const WorkspaceLayout: React.FC = () => {
   const [latestBrainDump, setLatestBrainDump] = useState<string>("");
-  const { extraction, isExtracting, error, extract, clearError } = useExtraction();
+  const { understanding, isExtracting, error, extract, clearError } = useExtraction();
 
   const executionState: ExecutionState = {
     understanding: isExtracting
       ? "Processing..."
-      : extraction
+      : understanding
       ? "Completed"
       : error
       ? "Failed"
@@ -78,7 +78,7 @@ export const WorkspaceLayout: React.FC = () => {
           )}
 
           <LatestBrainDump content={latestBrainDump} />
-          <AiUnderstandingView data={extraction} />
+          <AiUnderstandingView data={understanding?.extraction ?? null} />
         </div>
 
         {/* Right Sidebar (Execution Status) - 20% width (3 of 12 cols) */}

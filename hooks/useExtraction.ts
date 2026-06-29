@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { ExtractionResult } from "@/types/extraction";
 import { UnderstandingResult } from "@/types/understanding";
 
 export const useExtraction = () => {
-  const [extraction, setExtraction] = useState<ExtractionResult | null>(null);
+  const [understanding, setUnderstanding] = useState<UnderstandingResult | null>(null);
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const extract = useCallback(async (text: string): Promise<ExtractionResult | null> => {
+  const extract = useCallback(async (text: string): Promise<UnderstandingResult | null> => {
     setIsExtracting(true);
     setError(null);
 
@@ -27,10 +26,17 @@ export const useExtraction = () => {
         throw new Error(errorData.error || "Failed to extract structured understanding.");
       }
 
-      const data: UnderstandingResult | ExtractionResult = await response.json();
-      const extractionResult: ExtractionResult = "extraction" in data ? data.extraction : data;
-      setExtraction(extractionResult);
-      return extractionResult;
+      const data = await response.json();
+      const understandingResult: UnderstandingResult =
+        "extraction" in data && "clarification" in data
+          ? (data as UnderstandingResult)
+          : {
+              extraction: "extraction" in data ? data.extraction : data,
+              clarification: { requiresClarification: false, questions: [] },
+            };
+
+      setUnderstanding(understandingResult);
+      return understandingResult;
     } catch (err: any) {
       const msg = err.message || "An error occurred while communicating with Gemini.";
       setError(msg);
@@ -43,10 +49,11 @@ export const useExtraction = () => {
   const clearError = useCallback(() => setError(null), []);
 
   return {
-    extraction,
+    understanding,
     isExtracting,
     error,
     extract,
     clearError,
   };
 };
+
