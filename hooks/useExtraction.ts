@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ExtractionResult } from "@/types/extraction";
+import { UnderstandingResult } from "@/types/understanding";
 
 export const useExtraction = () => {
   const [extraction, setExtraction] = useState<ExtractionResult | null>(null);
@@ -26,9 +27,10 @@ export const useExtraction = () => {
         throw new Error(errorData.error || "Failed to extract structured understanding.");
       }
 
-      const data: ExtractionResult = await response.json();
-      setExtraction(data);
-      return data;
+      const data: UnderstandingResult | ExtractionResult = await response.json();
+      const extractionResult: ExtractionResult = "extraction" in data ? data.extraction : data;
+      setExtraction(extractionResult);
+      return extractionResult;
     } catch (err: any) {
       const msg = err.message || "An error occurred while communicating with Gemini.";
       setError(msg);
