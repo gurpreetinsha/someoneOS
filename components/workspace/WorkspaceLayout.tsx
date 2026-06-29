@@ -5,14 +5,19 @@ import { MemorySidebar } from "./MemorySidebar";
 import { BrainDumpInput } from "./BrainDumpInput";
 import { LatestBrainDump } from "./LatestBrainDump";
 import { AiUnderstandingView } from "./AiUnderstandingView";
+import { ClarificationPanel } from "./ClarificationPanel";
+import { ExecutionPreview } from "./ExecutionPreview";
 import { ExecutionSidebar } from "./ExecutionSidebar";
 import { useExtraction } from "@/hooks/useExtraction";
 import { ExecutionState } from "@/types/extraction";
+import { UnderstandingResult } from "@/types/understanding";
+import { runSomeoneOS, SomeoneOSResult } from "@/lib/someoneos/engine";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const WorkspaceLayout: React.FC = () => {
   const [latestBrainDump, setLatestBrainDump] = useState<string>("");
+  const [result, setResult] = useState<SomeoneOSResult | null>(null);
   const { understanding, isExtracting, error, extract, clearError } = useExtraction();
 
   const executionState: ExecutionState = {
@@ -23,21 +28,31 @@ export const WorkspaceLayout: React.FC = () => {
       : error
       ? "Failed"
       : "Waiting...",
-    planning: "Waiting...",
+    planning: result?.plan ? "Completed" : "Waiting...",
     calendar: "Waiting...",
     research: "Waiting...",
   };
 
   const handleBrainDumpSubmit = async (content: string) => {
     setLatestBrainDump(content);
+    setResult(null);
     await extract(content);
   };
 
   const handleRetry = async () => {
     if (latestBrainDump) {
       clearError();
+      setResult(null);
       await extract(latestBrainDump);
     }
+  };
+
+  const handleContinuePlanning = (payload: {
+    understanding: UnderstandingResult;
+    clarificationAnswers: Record<string, string>;
+  }) => {
+    const res = runSomeoneOS(payload);
+    setResult(res);
   };
 
   return (
@@ -79,6 +94,11 @@ export const WorkspaceLayout: React.FC = () => {
 
           <LatestBrainDump content={latestBrainDump} />
           <AiUnderstandingView data={understanding?.extraction ?? null} />
+          <ClarificationPanel
+            understanding={understanding}
+            onContinue={handleContinuePlanning}
+          />
+          <ExecutionPreview plan={result?.plan ?? null} />
         </div>
 
         {/* Right Sidebar (Execution Status) - 20% width (3 of 12 cols) */}
@@ -89,3 +109,4 @@ export const WorkspaceLayout: React.FC = () => {
     </div>
   );
 };
+

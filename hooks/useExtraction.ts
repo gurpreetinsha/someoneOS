@@ -37,8 +37,8 @@ export const useExtraction = () => {
 
       setUnderstanding(understandingResult);
       return understandingResult;
-    } catch (err: any) {
-      const msg = err.message || "An error occurred while communicating with Gemini.";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "An error occurred while communicating with Gemini.";
       setError(msg);
       return null;
     } finally {

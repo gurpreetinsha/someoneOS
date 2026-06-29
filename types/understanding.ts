@@ -4,4 +4,5 @@ import { ClarificationResult } from "./clarification";
 export interface UnderstandingResult {
   extraction: ExtractionResult;
   clarification: ClarificationResult;
+  rawText?: string;
 }

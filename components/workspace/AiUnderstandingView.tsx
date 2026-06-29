@@ -9,8 +9,7 @@ import {
   Target, 
   ShieldAlert, 
   Flame, 
-  Heart, 
-  HelpCircle 
+  Heart 
 } from "lucide-react";
 
 interface AiUnderstandingViewProps {
@@ -31,7 +30,6 @@ const categories: CategoryConfig[] = [
   { key: "constraints", title: "Constraints", icon: ShieldAlert, color: "text-rose-600 bg-rose-50" },
   { key: "priorities", title: "Priorities", icon: Flame, color: "text-purple-600 bg-purple-50" },
   { key: "emotionalSignals", title: "Emotional Signals", icon: Heart, color: "text-pink-600 bg-pink-50" },
-  { key: "missingInformation", title: "Missing Information", icon: HelpCircle, color: "text-indigo-600 bg-indigo-50" },
 ];
 
 export const AiUnderstandingView: React.FC<AiUnderstandingViewProps> = ({ data }) => {

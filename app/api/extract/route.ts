@@ -54,10 +54,11 @@ export async function POST(request: Request) {
     console.log("=== SERVER DEBUG: RESPONSE OBJECT END ===");
 
     return NextResponse.json(responseObject);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Gemini Extraction Error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to analyze brain dump with Gemini.";
     return NextResponse.json(
-      { error: error?.message || "Failed to analyze brain dump with Gemini." },
+      { error: errorMessage },
       { status: 500 }
     );
   }
