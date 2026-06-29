@@ -1,10 +1,17 @@
 import { createPlan } from "./planner";
-import { PlannerInput, PlanResult } from "./types/planner";
+import { PlanResult } from "./types/planner";
+import { buildPlanningContext } from "@/lib/domain/normalizer";
+import { UnderstandingResult } from "@/types/understanding";
+import { MemoryExtractionResult } from "@/lib/memory/types/memory";
 
 interface TestCase {
   name: string;
   description: string;
-  input: PlannerInput;
+  input: {
+    understanding: UnderstandingResult;
+    memory: MemoryExtractionResult;
+    clarificationAnswers: Record<string, string>;
+  };
   verify: (result: PlanResult) => boolean;
 }
 
@@ -312,7 +319,7 @@ const testCases: TestCase[] = [
       clarificationAnswers: emptyClarification,
     },
     verify: (res) => {
-      const res2 = createPlan({
+      const ctx2 = buildPlanningContext({
         understanding: {
           extraction: { events: [], deadlines: ["Finish report by Friday"], goals: [], constraints: [], priorities: ["Study DSA"], emotionalSignals: [], missingInformation: [] },
           clarification: { requiresClarification: false, questions: [] },
@@ -320,6 +327,7 @@ const testCases: TestCase[] = [
         memory: emptyMemory,
         clarificationAnswers: emptyClarification,
       });
+      const res2 = createPlan(ctx2);
       return JSON.stringify(res.executionOrder) === JSON.stringify(res2.executionOrder) && res.tasks[0].id === res2.tasks[0].id;
     },
   },
@@ -349,7 +357,8 @@ export function runPlannerTests(): boolean {
 
   testCases.forEach((tc) => {
     try {
-      const res = createPlan(tc.input);
+      const context = buildPlanningContext(tc.input);
+      const res = createPlan(context);
       const ok = tc.verify(res);
       if (ok) {
         passed++;

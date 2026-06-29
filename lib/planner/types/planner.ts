@@ -1,5 +1,4 @@
-import { UnderstandingResult } from "@/types/understanding";
-import { MemoryExtractionResult } from "@/lib/memory/types/memory";
+import { PlanningContext } from "@/lib/domain/types";
 
 export type TaskPriority = "high" | "medium" | "low";
 
@@ -33,9 +32,7 @@ export interface UnplannedItem {
 }
 
 export interface PlannerInput {
-  understanding: UnderstandingResult;
-  memory: MemoryExtractionResult;
-  clarificationAnswers: Record<string, string>;
+  context: PlanningContext;
 }
 
 export interface PlanResult {

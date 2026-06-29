@@ -3,6 +3,7 @@ import { MemoryExtractionResult } from "@/lib/memory/types/memory";
 import { PlanResult } from "@/lib/planner/types/planner";
 import { extractMemory } from "@/lib/memory/memoryEngine";
 import { createPlan } from "@/lib/planner/planner";
+import { buildPlanningContext } from "@/lib/domain/normalizer";
 
 export interface SomeoneOSInput {
   understanding: UnderstandingResult;
@@ -23,12 +24,15 @@ export function runSomeoneOS(input: SomeoneOSInput): SomeoneOSResult {
   // Stage 1: Memory Extraction
   const memory = extractMemory(input.understanding);
 
-  // Stage 2: Planner Engine
-  const plan = createPlan({
+  // Stage 1.5: Build Upstream Domain PlanningContext
+  const context = buildPlanningContext({
     understanding: input.understanding,
     memory,
     clarificationAnswers: input.clarificationAnswers,
   });
+
+  // Stage 2: Planner Engine (Consumes PlanningContext only)
+  const plan = createPlan(context);
 
   // Stage 3: Calendar (Extension point for future integration)
   // Stage 4: Execution (Extension point for future integration)
