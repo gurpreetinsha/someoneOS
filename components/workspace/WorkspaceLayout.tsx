@@ -223,6 +223,7 @@ export const WorkspaceLayout: React.FC = () => {
             understanding={result?.understanding ?? null}
             memories={historicalMemories}
             cognitiveLoad={cognitiveLoad}
+            failurePrediction={result?.failurePrediction ?? null}
           />
         </div>
 

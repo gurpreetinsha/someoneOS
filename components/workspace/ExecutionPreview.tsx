@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { PlanResult, TaskPriority } from "@/lib/planner/types/planner";
 import { UnderstandingResult } from "@/types/understanding";
 import { MemoryItem } from "@/lib/memory/types/memory";
+import { FailurePredictionResult } from "@/lib/someoneos/failurePrediction";
 import {
   AlertTriangle,
   HelpCircle,
@@ -19,6 +20,9 @@ import {
   ScrollText,
   BookmarkCheck,
   CheckCircle2,
+  Brain,
+  TrendingDown,
+  Info,
 } from "lucide-react";
 
 interface ExecutionPreviewProps {
@@ -26,6 +30,7 @@ interface ExecutionPreviewProps {
   understanding: UnderstandingResult | null;
   memories: MemoryItem[];
   cognitiveLoad: number;
+  failurePrediction?: FailurePredictionResult | null;
 }
 
 const getPriorityColor = (priority: TaskPriority) => {
@@ -45,6 +50,7 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
   understanding,
   memories,
   cognitiveLoad,
+  failurePrediction = null,
 }) => {
   const [activeTab, setActiveTab] = useState<"timeline" | "simulator" | "load" | "log">("timeline");
   
@@ -145,6 +151,182 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Failure Prediction Card */}
+      {failurePrediction && (
+        <div className="rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-sm flex flex-col gap-6 bg-gradient-to-br from-neutral-50/30 via-white to-neutral-50/50 hover:shadow-md transition-shadow duration-300">
+          {/* Top section: Title and Badge */}
+          <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
+            <div className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-indigo-600 animate-pulse" />
+              <div>
+                <h3 className="text-sm font-extrabold text-neutral-900 tracking-tight uppercase">
+                  AI Failure Prediction Engine
+                </h3>
+                <p className="text-[10px] text-neutral-500 font-medium">
+                  Deterministic risk synthesis and plan effectiveness analysis
+                </p>
+              </div>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border shadow-sm ${
+              failurePrediction.riskLevel === "Low"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : failurePrediction.riskLevel === "Medium"
+                ? "bg-amber-50 border-amber-200 text-amber-700"
+                : "bg-rose-50 border-rose-200 text-rose-700"
+            }`}>
+              {failurePrediction.riskLevel} Risk
+            </span>
+          </div>
+
+          {/* Metric Dashboard Columns */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+            {/* Success Probability */}
+            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-emerald-50/40 border border-emerald-100/60 text-center">
+              <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">
+                Success Prob.
+              </span>
+              <span className="text-3xl font-extrabold text-emerald-700 tracking-tighter">
+                {failurePrediction.successProbability}%
+              </span>
+            </div>
+
+            {/* Failure Risk */}
+            <div className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center ${
+              failurePrediction.riskLevel === "Low"
+                ? "bg-emerald-50/20 border-emerald-100/40 text-emerald-700"
+                : failurePrediction.riskLevel === "Medium"
+                ? "bg-amber-50/40 border-amber-100/60 text-amber-700"
+                : "bg-rose-50/40 border-rose-100/60 text-rose-700"
+            }`}>
+              <span className={`text-[9px] font-black uppercase tracking-widest mb-1 ${
+                failurePrediction.riskLevel === "Low"
+                  ? "text-emerald-600"
+                  : failurePrediction.riskLevel === "Medium"
+                  ? "text-amber-600"
+                  : "text-rose-600"
+              }`}>
+                Failure Risk
+              </span>
+              <span className={`text-3xl font-extrabold tracking-tighter ${
+                failurePrediction.riskLevel === "Low"
+                  ? "text-emerald-700"
+                  : failurePrediction.riskLevel === "Medium"
+                  ? "text-amber-700"
+                  : "text-rose-700"
+              }`}>
+                {failurePrediction.failureRisk}%
+              </span>
+            </div>
+
+            {/* Confidence Score */}
+            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100/50 text-center">
+              <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">
+                Confidence
+              </span>
+              <span className="text-3xl font-extrabold text-indigo-700 tracking-tighter">
+                {failurePrediction.confidenceScore}%
+              </span>
+            </div>
+
+            {/* Planner Improvement */}
+            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-blue-50/40 border border-blue-100/60 text-center">
+              <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">
+                Optimization
+              </span>
+              <span className="text-3xl font-extrabold text-blue-700 tracking-tighter flex items-center gap-0.5">
+                +{failurePrediction.plannerImprovement}%
+              </span>
+            </div>
+          </div>
+
+          {/* Planner Value: Before vs After */}
+          <div className="rounded-2xl border border-neutral-100 bg-neutral-50/50 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                Δ
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-neutral-800">
+                  Plan Impact Synthesis
+                </span>
+                <span className="text-[10px] text-neutral-500">
+                  Real-time cognitive risk reduction created by the planner
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-6 text-xs font-bold text-neutral-700">
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] text-neutral-400 font-medium">Before planning</span>
+                <span className="text-neutral-500 line-through">Failure Risk {failurePrediction.beforePlanningRisk}%</span>
+              </div>
+              <TrendingDown className="h-5 w-5 text-blue-500 animate-pulse" />
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] text-neutral-400 font-medium">After planning</span>
+                <span className="text-emerald-600">Failure Risk {failurePrediction.afterPlanningRisk}%</span>
+              </div>
+              <div className="px-2.5 py-1 rounded bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-wider font-mono">
+                +{failurePrediction.plannerImprovement}% Improvement
+              </div>
+            </div>
+          </div>
+
+          {/* Explanations Grid: Top reasons & drivers */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            {/* Why? Top 5 Reasons */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-1.5 text-neutral-800">
+                <Info className="h-4 w-4 text-indigo-500" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-600">
+                  Prediction Rationale (Why?)
+                </h4>
+              </div>
+              <ul className="flex flex-col gap-2 pl-1">
+                {failurePrediction.topReasons.map((reason, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-xs font-semibold text-neutral-800 leading-tight">
+                    <span className="text-indigo-500 text-sm leading-none mt-0.5">•</span>
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Drivers and Mitigations */}
+            <div className="flex flex-col gap-4 border-t md:border-t-0 md:border-l border-neutral-100 md:pl-6 pt-4 md:pt-0">
+              {/* Risk Increases */}
+              <div className="flex flex-col gap-2">
+                <h4 className="text-[10px] font-black uppercase tracking-wider text-rose-600">
+                  What increased risk?
+                </h4>
+                <div className="flex flex-col gap-1.5">
+                  {failurePrediction.increasedRiskFactors.map((factor, idx) => (
+                    <div key={idx} className="flex justify-between items-center gap-2 text-[11px] font-semibold text-neutral-700 bg-rose-50/20 p-1.5 rounded-lg border border-rose-100/30">
+                      <span className="leading-snug">{factor.factor}</span>
+                      <span className="text-rose-600 font-bold whitespace-nowrap">+{factor.impact}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Risk Reductions */}
+              <div className="flex flex-col gap-2">
+                <h4 className="text-[10px] font-black uppercase tracking-wider text-emerald-600">
+                  What reduced risk?
+                </h4>
+                <div className="flex flex-col gap-1.5">
+                  {failurePrediction.reducedRiskFactors.map((factor, idx) => (
+                    <div key={idx} className="flex justify-between items-center gap-2 text-[11px] font-semibold text-neutral-700 bg-emerald-50/20 p-1.5 rounded-lg border border-emerald-100/30">
+                      <span className="leading-snug">{factor.factor}</span>
+                      <span className="text-emerald-600 font-bold whitespace-nowrap">-{factor.impact}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs Selector */}
       <div className="flex border-b border-neutral-200 gap-1 overflow-x-auto">

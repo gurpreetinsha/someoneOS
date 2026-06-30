@@ -4,6 +4,7 @@ import { PlanResult } from "@/lib/planner/types/planner";
 import { extractMemory } from "@/lib/memory/memoryEngine";
 import { createPlan } from "@/lib/planner/planner";
 import { buildPlanningContext } from "@/lib/domain/normalizer";
+import { calculateFailurePrediction, FailurePredictionResult } from "./failurePrediction";
 
 export interface SomeoneOSInput {
   understanding: UnderstandingResult;
@@ -15,6 +16,7 @@ export interface SomeoneOSResult {
   understanding: UnderstandingResult;
   memory: MemoryExtractionResult;
   plan: PlanResult;
+  failurePrediction?: FailurePredictionResult;
 }
 
 /**
@@ -54,6 +56,9 @@ export function runSomeoneOS(input: SomeoneOSInput): SomeoneOSResult {
   // Stage 2: Planner Engine (Consumes PlanningContext only)
   const plan = createPlan(context);
 
+  // Stage 2.5: Failure Prediction Engine
+  const failurePrediction = calculateFailurePrediction(context, plan, input.clarificationAnswers);
+
   // Stage 3: Calendar (Extension point for future integration)
   // Stage 4: Execution (Extension point for future integration)
   // Stage 5: Research (Extension point for future integration)
@@ -63,5 +68,7 @@ export function runSomeoneOS(input: SomeoneOSInput): SomeoneOSResult {
     understanding: input.understanding,
     memory,
     plan,
+    failurePrediction,
   };
 }
+
