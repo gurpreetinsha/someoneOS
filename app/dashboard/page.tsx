@@ -20,8 +20,10 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-500" />
-        <p className="mt-4 text-sm text-neutral-500">Loading your workspace...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-900" />
+        <p className="mt-4 text-xs font-semibold text-neutral-700 animate-pulse tracking-wide uppercase">
+          Authenticating secure space & syncing memory indexes...
+        </p>
       </div>
     );
   }

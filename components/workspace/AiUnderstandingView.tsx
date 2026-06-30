@@ -56,7 +56,7 @@ export const AiUnderstandingView: React.FC<AiUnderstandingViewProps> = ({ data }
           return (
             <div
               key={cat.key}
-              className="rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-all hover:shadow-md"
+              className="rounded-3xl border border-neutral-200/80 bg-white/70 backdrop-blur-md p-5 shadow-sm transition-all duration-300 hover:shadow-md"
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className={`p-1.5 rounded-lg ${cat.color}`}>

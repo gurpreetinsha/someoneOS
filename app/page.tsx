@@ -49,7 +49,7 @@ export default function Home() {
         </div>
 
         {/* Apple/Notion minimalist hero preview box */}
-        <div className="mt-16 w-full max-w-4xl rounded-2xl border border-neutral-200/80 bg-white/70 p-4 shadow-2xl backdrop-blur-xl sm:p-6 lg:p-8">
+        <div className="mt-16 w-full max-w-4xl rounded-3xl border border-neutral-200/80 bg-white/70 p-4 shadow-2xl backdrop-blur-xl sm:p-6 lg:p-8">
           <div className="flex items-center gap-2 border-b border-neutral-100 pb-4 mb-6">
             <div className="h-3 w-3 rounded-full bg-neutral-300" />
             <div className="h-3 w-3 rounded-full bg-neutral-300" />

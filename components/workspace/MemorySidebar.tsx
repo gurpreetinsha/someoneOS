@@ -18,40 +18,40 @@ export const MemorySidebar: React.FC<MemorySidebarProps> = ({ memories = [] }) =
       id: "routine",
       title: "Routines & Habits",
       icon: Repeat,
-      color: "text-blue-500 bg-blue-50/50 border-blue-100",
-      emptyMsg: "No routines established yet. Brain dumps will construct habits.",
+      color: "text-blue-600 bg-blue-50/50 border-blue-100",
+      emptyMsg: "No routines established. Daily structure is automatically learned from your brain dumps.",
       items: getCategoryMemories("routine"),
     },
     {
       id: "preference",
       title: "System Preferences",
       icon: Sliders,
-      color: "text-amber-500 bg-amber-50/50 border-amber-100",
-      emptyMsg: "No scheduling preferences learned yet.",
+      color: "text-amber-600 bg-amber-50/50 border-amber-100",
+      emptyMsg: "No system preferences learned yet. Adaptive timeline padding will calibrate to your pace.",
       items: getCategoryMemories("preference"),
     },
     {
       id: "health",
       title: "Physical Health Factors",
       icon: Activity,
-      color: "text-rose-500 bg-rose-50/50 border-rose-100",
-      emptyMsg: "No physical health parameters registered.",
+      color: "text-rose-600 bg-rose-50/50 border-rose-100",
+      emptyMsg: "No physical constraints logged. Share health factors (e.g. back pain) to protect physical stamina.",
       items: getCategoryMemories("health"),
     },
     {
       id: "behavior",
       title: "Behavioral Profiles",
       icon: Clock,
-      color: "text-purple-500 bg-purple-50/50 border-purple-100",
-      emptyMsg: "No behavioral patterns detected yet.",
+      color: "text-purple-600 bg-purple-50/50 border-purple-100",
+      emptyMsg: "No behavioral patterns detected. Multipliers will adjust as task buffers calibrate.",
       items: getCategoryMemories("behavior"),
     },
     {
       id: "goal",
       title: "Long-term Focus Goals",
       icon: Target,
-      color: "text-emerald-500 bg-emerald-50/50 border-emerald-100",
-      emptyMsg: "No long-term aspirations declared.",
+      color: "text-emerald-600 bg-emerald-50/50 border-emerald-100",
+      emptyMsg: "No long-term focus goals active. Define overarching objectives to structure daily planning.",
       items: [...getCategoryMemories("goal"), ...getCategoryMemories("project")],
     },
   ];
@@ -73,8 +73,8 @@ export const MemorySidebar: React.FC<MemorySidebarProps> = ({ memories = [] }) =
           return (
             <div
               key={cat.id}
-              className={`group rounded-xl border border-neutral-200 bg-white p-3.5 shadow-sm transition-all duration-200 hover:border-neutral-300 hover:shadow-md ${
-                hasItems ? "ring-1 ring-neutral-900/5 bg-gradient-to-b from-neutral-50/30 to-white" : ""
+              className={`group rounded-2xl border border-neutral-200/80 bg-white/70 backdrop-blur-sm p-4 shadow-sm transition-all duration-300 hover:border-neutral-300 hover:shadow-md ${
+                hasItems ? "ring-1 ring-neutral-900/5 bg-gradient-to-br from-neutral-50/20 to-white/70" : ""
               }`}
             >
               <div className="flex items-center gap-2 mb-2">

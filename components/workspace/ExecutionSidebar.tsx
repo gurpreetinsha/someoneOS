@@ -102,7 +102,7 @@ export const ExecutionSidebar: React.FC<ExecutionSidebarProps> = ({
       </div>
 
       {/* Flagship: System Operational Mode */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-3.5 shadow-sm flex flex-col gap-2">
+      <div className="rounded-2xl border border-neutral-200/80 bg-white/70 backdrop-blur-md p-4 shadow-sm flex flex-col gap-2 hover:shadow-md transition-shadow duration-300">
         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
           System Operational Mode
         </span>
@@ -126,7 +126,7 @@ export const ExecutionSidebar: React.FC<ExecutionSidebarProps> = ({
       </div>
 
       {/* Flagship: Cognitive Load Gauge */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-3.5 shadow-sm flex flex-col gap-2.5">
+      <div className="rounded-2xl border border-neutral-200/80 bg-white/70 backdrop-blur-md p-4 shadow-sm flex flex-col gap-2.5 hover:shadow-md transition-shadow duration-300">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
             Cognitive Load Index
@@ -157,7 +157,7 @@ export const ExecutionSidebar: React.FC<ExecutionSidebarProps> = ({
             return (
               <div
                 key={card.id}
-                className="rounded-xl border border-neutral-200 bg-white p-2.5 shadow-sm flex items-center justify-between gap-2"
+                className="rounded-2xl border border-neutral-200/80 bg-white/70 backdrop-blur-md p-3 shadow-sm flex items-center justify-between gap-2 hover:shadow-md transition-shadow duration-300"
               >
                 <div className="flex items-center gap-2">
                   <div className="p-1 rounded bg-neutral-50 border border-neutral-200/60">
@@ -175,7 +175,7 @@ export const ExecutionSidebar: React.FC<ExecutionSidebarProps> = ({
       </div>
 
       {/* Quick Metrics */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-3 shadow-sm flex items-center justify-between text-xs font-medium text-neutral-600 bg-neutral-50/50">
+      <div className="rounded-2xl border border-neutral-200/80 bg-neutral-50/50 p-4 shadow-sm flex items-center justify-between text-xs font-semibold text-neutral-700">
         <div className="flex items-center gap-1">
           <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
           <span>Risks: <strong>{warningsCount}</strong></span>

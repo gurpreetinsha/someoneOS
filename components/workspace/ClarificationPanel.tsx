@@ -45,12 +45,11 @@ export const ClarificationPanel: React.FC<ClarificationPanelProps> = ({
       understanding,
       clarificationAnswers: answers,
     };
-    console.log(payload);
     onContinue(payload);
   };
 
   return (
-    <div className="w-full flex flex-col gap-5 border border-amber-200/80 bg-gradient-to-b from-amber-50/40 to-white p-6 rounded-2xl shadow-sm animate-in fade-in slide-in-from-bottom-3 duration-500">
+    <div className="w-full flex flex-col gap-5 border border-amber-200/80 bg-gradient-to-b from-amber-50/40 to-white/70 backdrop-blur-md p-6 rounded-3xl shadow-sm animate-in fade-in slide-in-from-bottom-3 duration-500">
       <div className="flex items-center gap-2.5 border-b border-amber-200/60 pb-3">
         <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700">
           <HelpCircle className="h-4 w-4" />
@@ -91,7 +90,7 @@ export const ClarificationPanel: React.FC<ClarificationPanelProps> = ({
         <Button
           onClick={handleContinue}
           disabled={!isComplete}
-          className="rounded-xl px-5 text-xs font-semibold shadow-sm flex items-center gap-2"
+          className="rounded-xl px-5 text-xs font-semibold shadow-sm flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >
           <span>Continue Planning</span>
           <ArrowRight className="h-3.5 w-3.5" />

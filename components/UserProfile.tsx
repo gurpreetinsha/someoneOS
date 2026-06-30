@@ -27,7 +27,7 @@ export const UserProfile: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-sm backdrop-blur-xl">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 rounded-3xl border border-neutral-200/80 bg-white/70 p-6 shadow-sm backdrop-blur-md hover:shadow-md transition-shadow duration-300 w-full">
       <div className="flex items-center gap-4">
         <div className="relative h-16 w-16 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 flex items-center justify-center shadow-inner">
           {user.photoURL ? (
@@ -56,12 +56,12 @@ export const UserProfile: React.FC = () => {
         variant="outline"
         onClick={handleSignOut}
         disabled={isSigningOut}
-        className="rounded-xl border-neutral-200 hover:bg-neutral-100 hover:text-neutral-900 transition-all text-neutral-700"
+        className="rounded-xl border-neutral-200 hover:bg-neutral-100 hover:text-neutral-900 text-neutral-700 hover:scale-[1.02] active:scale-[0.98] transition-all"
       >
         {isSigningOut ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Signing out...
+            <Loader2 className="mr-2 h-4 w-4 animate-spin text-neutral-400" />
+            Archiving cognitive state...
           </>
         ) : (
           <>

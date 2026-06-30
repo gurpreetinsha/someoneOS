@@ -34,10 +34,6 @@ export async function POST(request: Request) {
     const result = await model.generateContent(`Analyze this brain dump:\n\n${text}`);
     const responseText = result.response.text();
 
-    console.log("=== SERVER DEBUG: RAW GEMINI TEXT START ===");
-    console.log(responseText);
-    console.log("=== SERVER DEBUG: RAW GEMINI TEXT END ===");
-
     // Clean up potential code fences if any slipped through
     const cleanedText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsedData = JSON.parse(cleanedText);
@@ -48,10 +44,6 @@ export async function POST(request: Request) {
       extraction: parsedData,
       clarification,
     };
-
-    console.log("=== SERVER DEBUG: RESPONSE OBJECT START ===");
-    console.log(JSON.stringify(responseObject, null, 2));
-    console.log("=== SERVER DEBUG: RESPONSE OBJECT END ===");
 
     return NextResponse.json(responseObject);
   } catch (error: unknown) {

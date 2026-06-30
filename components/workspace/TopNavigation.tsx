@@ -62,10 +62,11 @@ export const TopNavigation: React.FC = () => {
               size="sm"
               onClick={handleSignOut}
               disabled={isSigningOut}
-              className="text-xs text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+              className="text-xs text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+              aria-label="Sign out button"
             >
               {isSigningOut ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
               ) : (
                 <>
                   <LogOut className="h-3.5 w-3.5 mr-1.5" />

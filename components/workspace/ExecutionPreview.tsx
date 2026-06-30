@@ -1,10 +1,11 @@
 "use client";
-
+ 
 import React, { useState } from "react";
 import { PlanResult, TaskPriority } from "@/lib/planner/types/planner";
 import { UnderstandingResult } from "@/types/understanding";
 import { MemoryItem } from "@/lib/memory/types/memory";
 import { FailurePredictionResult } from "@/lib/someoneos/failurePrediction";
+import { ScheduleNegotiationResult } from "@/lib/someoneos/scheduleNegotiator";
 import {
   AlertTriangle,
   HelpCircle,
@@ -24,15 +25,18 @@ import {
   TrendingDown,
   Info,
 } from "lucide-react";
-
+ 
 interface ExecutionPreviewProps {
   plan: PlanResult | null;
   understanding: UnderstandingResult | null;
   memories: MemoryItem[];
   cognitiveLoad: number;
   failurePrediction?: FailurePredictionResult | null;
+  selectedStrategyId?: "A" | "B" | "C" | null;
+  onSelectStrategy?: (id: "A" | "B" | "C") => void;
+  negotiation?: ScheduleNegotiationResult | null;
 }
-
+ 
 const getPriorityColor = (priority: TaskPriority) => {
   switch (priority) {
     case "high":
@@ -44,13 +48,16 @@ const getPriorityColor = (priority: TaskPriority) => {
       return "text-slate-700 bg-slate-50 border-slate-200";
   }
 };
-
+ 
 export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
   plan,
   understanding,
   memories,
   cognitiveLoad,
   failurePrediction = null,
+  selectedStrategyId = null,
+  onSelectStrategy,
+  negotiation = null,
 }) => {
   const [activeTab, setActiveTab] = useState<"timeline" | "simulator" | "load" | "log">("timeline");
   
@@ -60,7 +67,44 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
   const [simLogs, setSimLogs] = useState<string[]>([]);
   const [simStatus, setSimStatus] = useState<"idle" | "running" | "collision" | "repairing" | "stable">("idle");
 
-  if (!plan) return null;
+  if (!plan) {
+    return (
+      <div className="w-full flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Header Banner */}
+        <div className="flex items-center gap-2.5 border-b border-neutral-200 pb-3">
+          <div className="p-1.5 rounded-lg bg-neutral-900 text-white">
+            <BookmarkCheck className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-neutral-900 tracking-tight uppercase">
+              Cognitive Action Console
+            </h2>
+            <p className="text-xs text-neutral-500">
+              Intelligent scheduler analyzing user behavior, constraints, and risks.
+            </p>
+          </div>
+        </div>
+
+        {/* Dynamic Placeholder */}
+        <div className="rounded-3xl border border-dashed border-neutral-300 bg-white/40 p-12 text-center flex flex-col items-center justify-center gap-5 shadow-sm backdrop-blur-sm min-h-[350px]">
+          <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-100 text-neutral-400">
+            <Brain className="h-8 w-8 text-neutral-700 animate-pulse" />
+          </div>
+          <div className="max-w-md flex flex-col gap-2">
+            <h3 className="text-xs font-black text-neutral-800 uppercase tracking-widest">
+              Cognitive Engine Standby
+            </h3>
+            <p className="text-xs text-neutral-500 leading-relaxed font-semibold">
+              No active schedule has been synthesized yet. Input your unstructured thoughts, routines, upcoming tasks, or health conditions in the cockpit above.
+            </p>
+            <p className="text-[11px] text-neutral-400 italic font-medium">
+              SomeoneOS will automatically normalize your tasks, align them with your history, and forecast your success probability.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Timeline Hour blocks helper
   const scheduleSlots = [
@@ -138,154 +182,180 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
   return (
     <div className="w-full flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Banner */}
-      <div className="flex items-center gap-2.5 border-b border-neutral-200 pb-3">
-        <div className="p-1.5 rounded-lg bg-neutral-900 text-white">
-          <BookmarkCheck className="h-4 w-4" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-neutral-200 pb-3 gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-neutral-900 text-white">
+            <BookmarkCheck className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-neutral-900 tracking-tight uppercase">
+              Cognitive Action Console
+            </h2>
+            <p className="text-xs text-neutral-500">
+              Intelligent scheduler analyzing user behavior, constraints, and risks.
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-sm font-bold text-neutral-900 tracking-tight uppercase">
-            Cognitive Action Console
-          </h2>
-          <p className="text-xs text-neutral-500">
-            Intelligent scheduler analyzing user behavior, constraints, and risks.
-          </p>
-        </div>
+        {plan && (
+          <div className="self-start sm:self-center flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 border border-emerald-100/60 text-emerald-700 animate-in fade-in zoom-in-95 duration-500 shadow-sm">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            </span>
+            <span>Plan Synced • Aligned with {memories.length} Memories</span>
+          </div>
+        )}
       </div>
 
-      {/* Failure Prediction Card */}
+      {/* Success Forecast Card (Visually Dominant) */}
       {failurePrediction && (
-        <div className="rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-sm flex flex-col gap-6 bg-gradient-to-br from-neutral-50/30 via-white to-neutral-50/50 hover:shadow-md transition-shadow duration-300">
+        <div className="rounded-3xl border border-neutral-200/80 bg-gradient-to-br from-neutral-50/50 via-white to-indigo-50/10 p-6 sm:p-8 shadow-md flex flex-col gap-6 hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+          {/* Subtle glowing mesh */}
+          <div className="absolute top-0 left-1/3 w-40 h-40 bg-indigo-400/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 right-1/4 w-40 h-40 bg-emerald-400/5 rounded-full blur-3xl pointer-events-none" />
+
           {/* Top section: Title and Badge */}
-          <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
-            <div className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-indigo-600 animate-pulse" />
-              <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-neutral-100 pb-4 gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-900 text-white shadow-sm">
+                <Brain className="h-4.5 w-4.5 text-indigo-200 animate-pulse" />
+              </div>
+              <div className="text-left">
                 <h3 className="text-sm font-extrabold text-neutral-900 tracking-tight uppercase">
-                  AI Failure Prediction Engine
+                  Cognitive Success Forecast
                 </h3>
                 <p className="text-[10px] text-neutral-500 font-medium">
-                  Deterministic risk synthesis and plan effectiveness analysis
+                  Deterministic risk synthesis and plan effectiveness projection
                 </p>
               </div>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border shadow-sm ${
+            <span className={`self-start sm:self-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${
               failurePrediction.riskLevel === "Low"
                 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
                 : failurePrediction.riskLevel === "Medium"
                 ? "bg-amber-50 border-amber-200 text-amber-700"
-                : "bg-rose-50 border-rose-200 text-rose-700"
+                : "bg-rose-50 border-rose-200 text-rose-700 animate-pulse"
             }`}>
-              {failurePrediction.riskLevel} Risk
+              {failurePrediction.riskLevel} Plan Risk
             </span>
           </div>
 
-          {/* Metric Dashboard Columns */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-            {/* Success Probability */}
-            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-emerald-50/40 border border-emerald-100/60 text-center">
-              <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">
-                Success Prob.
-              </span>
-              <span className="text-3xl font-extrabold text-emerald-700 tracking-tighter">
-                {failurePrediction.successProbability}%
-              </span>
+          {/* Centerpiece: Dominant Success Arc + Stats Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            {/* Massive Circular Success Gauge */}
+            <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 rounded-2xl bg-white/60 border border-neutral-200/50 shadow-inner relative min-h-[200px]">
+              <svg className="w-36 h-36 transform -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" className="stroke-neutral-100 fill-none" strokeWidth="10" />
+                <circle 
+                  cx="60" 
+                  cy="60" 
+                  r="50" 
+                  className="fill-none transition-all duration-1000 stroke-indigo-600"
+                  strokeWidth="10"
+                  strokeDasharray="314.16"
+                  strokeDashoffset={314.16 - (314.16 * failurePrediction.successProbability) / 100}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute flex flex-col items-center justify-center text-center">
+                <span className="text-4xl font-black text-neutral-900 tracking-tight leading-none">
+                  {failurePrediction.successProbability}%
+                </span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-indigo-600 mt-1">
+                  Success Prob.
+                </span>
+              </div>
             </div>
 
-            {/* Failure Risk */}
-            <div className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center ${
-              failurePrediction.riskLevel === "Low"
-                ? "bg-emerald-50/20 border-emerald-100/40 text-emerald-700"
-                : failurePrediction.riskLevel === "Medium"
-                ? "bg-amber-50/40 border-amber-100/60 text-amber-700"
-                : "bg-rose-50/40 border-rose-100/60 text-rose-700"
-            }`}>
-              <span className={`text-[9px] font-black uppercase tracking-widest mb-1 ${
+            {/* Metrics Breakdown Grid */}
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
+              {/* Failure Risk */}
+              <div className={`rounded-2xl border p-4 flex flex-col justify-between text-left transition-all ${
                 failurePrediction.riskLevel === "Low"
-                  ? "text-emerald-600"
+                  ? "bg-emerald-50/30 border-emerald-100/50 text-emerald-950"
                   : failurePrediction.riskLevel === "Medium"
-                  ? "text-amber-600"
-                  : "text-rose-600"
+                  ? "bg-amber-50/30 border-amber-100/50 text-amber-950"
+                  : "bg-rose-50/30 border-rose-100/50 text-rose-950"
               }`}>
-                Failure Risk
-              </span>
-              <span className={`text-3xl font-extrabold tracking-tighter ${
-                failurePrediction.riskLevel === "Low"
-                  ? "text-emerald-700"
-                  : failurePrediction.riskLevel === "Medium"
-                  ? "text-amber-700"
-                  : "text-rose-700"
-              }`}>
-                {failurePrediction.failureRisk}%
-              </span>
-            </div>
+                <span className="text-[9px] font-black uppercase tracking-widest opacity-60">
+                  Risk Level
+                </span>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-2xl font-black tracking-tight">{failurePrediction.failureRisk}%</span>
+                  <span className="text-[10px] font-bold">risk</span>
+                </div>
+              </div>
 
-            {/* Confidence Score */}
-            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100/50 text-center">
-              <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">
-                Confidence
-              </span>
-              <span className="text-3xl font-extrabold text-indigo-700 tracking-tighter">
-                {failurePrediction.confidenceScore}%
-              </span>
-            </div>
+              {/* Confidence */}
+              <div className="rounded-2xl border border-neutral-200/60 bg-white/60 p-4 flex flex-col justify-between text-left">
+                <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400">
+                  Confidence
+                </span>
+                <div className="mt-2 flex items-baseline gap-1 text-neutral-900">
+                  <span className="text-2xl font-black tracking-tight">{failurePrediction.confidenceScore}%</span>
+                  <span className="text-[10px] font-bold opacity-60">accuracy</span>
+                </div>
+              </div>
 
-            {/* Planner Improvement */}
-            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-blue-50/40 border border-blue-100/60 text-center">
-              <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1 font-mono">
-                Optimization
-              </span>
-              <span className="text-3xl font-extrabold text-blue-700 tracking-tighter flex items-center gap-0.5">
-                +{failurePrediction.plannerImprovement}%
-              </span>
+              {/* Optimization */}
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/20 p-4 flex flex-col justify-between text-left">
+                <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">
+                  Mitigation Δ
+                </span>
+                <div className="mt-2 flex items-baseline gap-0.5 text-indigo-900">
+                  <span className="text-2xl font-black tracking-tight">+{failurePrediction.plannerImprovement}%</span>
+                  <span className="text-[10px] font-bold text-indigo-600/80">boost</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Planner Value: Before vs After */}
-          <div className="rounded-2xl border border-neutral-100 bg-neutral-50/50 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Before vs After Synthesis Bar */}
+          <div className="rounded-2xl border border-neutral-200/60 bg-white/40 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+              <div className="h-8 w-8 rounded-xl bg-indigo-100/60 text-indigo-950 flex items-center justify-center font-black text-xs font-mono">
                 Δ
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col text-left">
                 <span className="text-xs font-bold text-neutral-800">
                   Plan Impact Synthesis
                 </span>
                 <span className="text-[10px] text-neutral-500">
-                  Real-time cognitive risk reduction created by the planner
+                  Active cognitive risk reduction provided by the planner engine.
                 </span>
               </div>
             </div>
             
-            <div className="flex items-center gap-6 text-xs font-bold text-neutral-700">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-bold text-neutral-700">
               <div className="flex flex-col items-end">
-                <span className="text-[10px] text-neutral-400 font-medium">Before planning</span>
+                <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Before planning</span>
                 <span className="text-neutral-500 line-through">Failure Risk {failurePrediction.beforePlanningRisk}%</span>
               </div>
-              <TrendingDown className="h-5 w-5 text-blue-500 animate-pulse" />
+              <TrendingDown className="h-5 w-5 text-indigo-500 animate-pulse hidden sm:block" />
               <div className="flex flex-col items-start">
-                <span className="text-[10px] text-neutral-400 font-medium">After planning</span>
-                <span className="text-emerald-600">Failure Risk {failurePrediction.afterPlanningRisk}%</span>
+                <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">After planning</span>
+                <span className="text-emerald-700">Failure Risk {failurePrediction.afterPlanningRisk}%</span>
               </div>
-              <div className="px-2.5 py-1 rounded bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-wider font-mono">
-                +{failurePrediction.plannerImprovement}% Improvement
+              <div className="px-2.5 py-1 rounded bg-indigo-100 text-indigo-900 text-[10px] font-black uppercase tracking-widest font-mono">
+                +{failurePrediction.plannerImprovement}% Risk Reduced
               </div>
             </div>
           </div>
 
-          {/* Explanations Grid: Top reasons & drivers */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          {/* Rationale and Risk Drivers grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 text-left">
             {/* Why? Top 5 Reasons */}
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-1.5 text-neutral-800">
-                <Info className="h-4 w-4 text-indigo-500" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-600">
+                <Info className="h-4 w-4 text-indigo-600" />
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
                   Prediction Rationale (Why?)
                 </h4>
               </div>
               <ul className="flex flex-col gap-2 pl-1">
                 {failurePrediction.topReasons.map((reason, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-xs font-semibold text-neutral-800 leading-tight">
-                    <span className="text-indigo-500 text-sm leading-none mt-0.5">•</span>
+                  <li key={idx} className="flex items-start gap-2 text-xs font-semibold text-neutral-700 leading-tight">
+                    <span className="text-indigo-600 text-sm leading-none">•</span>
                     <span>{reason}</span>
                   </li>
                 ))}
@@ -296,12 +366,12 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
             <div className="flex flex-col gap-4 border-t md:border-t-0 md:border-l border-neutral-100 md:pl-6 pt-4 md:pt-0">
               {/* Risk Increases */}
               <div className="flex flex-col gap-2">
-                <h4 className="text-[10px] font-black uppercase tracking-wider text-rose-600">
-                  What increased risk?
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-rose-700">
+                  Active Risk Drivers
                 </h4>
                 <div className="flex flex-col gap-1.5">
                   {failurePrediction.increasedRiskFactors.map((factor, idx) => (
-                    <div key={idx} className="flex justify-between items-center gap-2 text-[11px] font-semibold text-neutral-700 bg-rose-50/20 p-1.5 rounded-lg border border-rose-100/30">
+                    <div key={idx} className="flex justify-between items-center gap-2 text-[11px] font-semibold text-neutral-700 bg-rose-50/30 p-2 rounded-lg border border-rose-100/50">
                       <span className="leading-snug">{factor.factor}</span>
                       <span className="text-rose-600 font-bold whitespace-nowrap">+{factor.impact}%</span>
                     </div>
@@ -311,12 +381,12 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
 
               {/* Risk Reductions */}
               <div className="flex flex-col gap-2">
-                <h4 className="text-[10px] font-black uppercase tracking-wider text-emerald-600">
-                  What reduced risk?
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-emerald-700">
+                  Active Safety Safeguards
                 </h4>
                 <div className="flex flex-col gap-1.5">
                   {failurePrediction.reducedRiskFactors.map((factor, idx) => (
-                    <div key={idx} className="flex justify-between items-center gap-2 text-[11px] font-semibold text-neutral-700 bg-emerald-50/20 p-1.5 rounded-lg border border-emerald-100/30">
+                    <div key={idx} className="flex justify-between items-center gap-2 text-[11px] font-semibold text-neutral-700 bg-emerald-50/30 p-2 rounded-lg border border-emerald-100/50">
                       <span className="leading-snug">{factor.factor}</span>
                       <span className="text-emerald-600 font-bold whitespace-nowrap">-{factor.impact}%</span>
                     </div>
@@ -324,6 +394,157 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Schedule Negotiator Card */}
+      {negotiation && negotiation.overloadDetected && (
+        <div className="rounded-3xl border border-indigo-200/80 bg-white/70 backdrop-blur-md p-6 sm:p-8 shadow-lg flex flex-col gap-6 bg-gradient-to-br from-indigo-50/20 via-white/80 to-purple-50/20 hover:shadow-xl transition-shadow duration-300 relative overflow-hidden">
+          {/* Decorative background gradients */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-200/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-200/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Title and Status Badge */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-indigo-100/60 pb-4 gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+                <Sparkles className="h-4.5 w-4.5 animate-pulse" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-sm font-extrabold text-neutral-900 tracking-tight uppercase">
+                  AI Schedule Negotiator
+                </h3>
+                <p className="text-[10px] text-neutral-500 font-medium">
+                  Dynamic multi-strategy timeline mitigation models
+                </p>
+              </div>
+            </div>
+            <span className="self-start sm:self-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 border border-rose-200 text-rose-700 shadow-sm flex items-center gap-1.5 animate-pulse">
+              <AlertTriangle className="h-3 w-3 text-rose-600" /> Overload Alert Mitigated
+            </span>
+          </div>
+
+          {/* Recommendation guidance */}
+          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 flex gap-3 text-xs leading-relaxed shadow-sm text-left">
+            <Info className="h-5 w-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-1">
+              <span className="font-extrabold text-indigo-950 uppercase tracking-wider text-[9px]">
+                Negotiator Recommendation
+              </span>
+              <p className="text-neutral-700 text-xs font-semibold">
+                {negotiation.recommendationReason}
+              </p>
+            </div>
+          </div>
+
+          {/* Strategy Options Columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(["A", "B", "C"] as const).map((stratId) => {
+              const strategy = negotiation.strategies[stratId];
+              const isRecommended = negotiation.recommendedId === stratId;
+              const isActive = selectedStrategyId === stratId;
+
+              return (
+                <div
+                  key={stratId}
+                  className={`rounded-2xl border p-5 flex flex-col justify-between gap-4 transition-all duration-300 relative text-left ${
+                    isActive
+                      ? "border-indigo-600 bg-indigo-50/20 shadow-md ring-2 ring-indigo-600/20"
+                      : isRecommended
+                      ? "border-neutral-200 bg-white hover:border-indigo-300 hover:shadow-md"
+                      : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md"
+                  }`}
+                >
+                  {/* Strategy Badge */}
+                  {isRecommended && (
+                    <div className="absolute -top-2.5 right-4 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-indigo-600 text-white shadow-sm flex items-center gap-1">
+                      <Sparkles className="h-2 w-2" /> System Pick
+                    </div>
+                  )}
+
+                  {/* Header / Info */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-black text-neutral-400 tracking-widest uppercase">
+                      Strategy {stratId}
+                    </span>
+                    <h4 className="text-xs font-extrabold text-neutral-800 leading-tight">
+                      {strategy.title}
+                    </h4>
+                  </div>
+
+                  {/* Metrics Row */}
+                  <div className="grid grid-cols-2 gap-2 my-1">
+                    {/* Success Prob */}
+                    <div className="flex flex-col p-2 rounded-xl bg-neutral-50 border border-neutral-100/60 text-center justify-center">
+                      <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">
+                        Success
+                      </span>
+                      <span className={`text-xs font-black tracking-tight ${
+                        strategy.successProbability >= 80
+                          ? "text-emerald-700"
+                          : strategy.successProbability >= 60
+                          ? "text-amber-700"
+                          : "text-rose-700"
+                      }`}>
+                        {strategy.successProbability}%
+                      </span>
+                    </div>
+
+                    {/* Cog Load */}
+                    <div className="flex flex-col p-2 rounded-xl bg-neutral-50 border border-neutral-100/60 text-center justify-center">
+                      <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-wider mb-0.5">
+                        Load
+                      </span>
+                      <span className={`text-xs font-black tracking-tight ${
+                        strategy.cognitiveLoad <= 40
+                          ? "text-emerald-700"
+                          : strategy.cognitiveLoad <= 70
+                          ? "text-amber-700"
+                          : "text-rose-700"
+                      }`}>
+                        {strategy.cognitiveLoad}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Description / Bullet Points */}
+                  <div className="flex flex-col gap-2 flex-grow">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-rose-600">
+                        Tradeoffs
+                      </span>
+                      <p className="text-[10px] text-neutral-600 leading-relaxed font-semibold">
+                        {strategy.tradeoffs}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-indigo-600">
+                        Explanation
+                      </span>
+                      <p className="text-[10px] text-neutral-500 leading-relaxed">
+                        {strategy.explanation}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Activate Action Button */}
+                  <button
+                    onClick={() => onSelectStrategy && onSelectStrategy(stratId)}
+                    disabled={isActive}
+                    aria-label={`Adopt Strategy ${stratId}`}
+                    className={`w-full py-2 rounded-xl text-center text-xs font-bold transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 ${
+                      isActive
+                        ? "bg-indigo-600 text-white cursor-default shadow-indigo-600/10 animate-none"
+                        : "bg-neutral-900 text-white hover:bg-neutral-800 hover:scale-[1.02] active:scale-[0.98]"
+                    }`}
+                  >
+                    {isActive ? "✓ Strategy Active" : `Adopt Strategy ${stratId}`}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

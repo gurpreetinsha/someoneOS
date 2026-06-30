@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 
@@ -15,11 +15,32 @@ Hackathon submission Sunday...
 Interview this week...
 Don't ruin my morning gym...`;
 
+const CONTEXTUAL_LOAD_MESSAGES = [
+  "Parsing cognitive load stream...",
+  "Analyzing task vectors and priority anchors...",
+  "Synchronizing constraints with memory bank...",
+  "Resolving potential schedule collisions...",
+  "Calibrating focus-switching thresholds...",
+  "Synthesizing optimal daily pathway..."
+];
+
 export const BrainDumpInput: React.FC<BrainDumpInputProps> = ({
   onSubmitBrainDump,
   isLoading = false,
 }) => {
   const [text, setText] = useState("");
+  const [messageIdx, setMessageIdx] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setMessageIdx(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setMessageIdx((prev) => (prev + 1) % CONTEXTUAL_LOAD_MESSAGES.length);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +67,8 @@ export const BrainDumpInput: React.FC<BrainDumpInputProps> = ({
             placeholder={DEFAULT_PLACEHOLDER}
             rows={6}
             disabled={isLoading}
-            className="w-full resize-none bg-transparent text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none leading-relaxed disabled:opacity-60"
+            className="w-full bg-transparent text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none leading-relaxed disabled:opacity-60 resize-y min-h-[120px]"
+            aria-label="Brain dump text input"
           />
         </div>
 
@@ -55,12 +77,13 @@ export const BrainDumpInput: React.FC<BrainDumpInputProps> = ({
             type="submit"
             size="lg"
             disabled={!text.trim() || isLoading}
-            className="rounded-xl px-6 py-5 text-sm font-medium shadow-sm transition-all hover:shadow-md disabled:opacity-50"
+            className="rounded-xl px-6 py-5 text-sm font-medium shadow-sm transition-all hover:shadow-md disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
+            aria-label="Build My Week Button"
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin text-neutral-400" />
+                <span className="animate-pulse">{CONTEXTUAL_LOAD_MESSAGES[messageIdx]}</span>
               </>
             ) : (
               <>
@@ -75,3 +98,4 @@ export const BrainDumpInput: React.FC<BrainDumpInputProps> = ({
     </div>
   );
 };
+
