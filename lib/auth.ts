@@ -14,6 +14,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
+  signInMockUser: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signInWithGoogle: async () => {},
   signOutUser: async () => {},
+  signInMockUser: () => {},
 });
 
 export const signInWithGoogle = async (): Promise<void> => {
@@ -45,14 +47,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const signInMockUser = () => {
+    setUser({
+      uid: "hackathon-demo-user",
+      displayName: "Hackathon Judge",
+      email: "judge@someoneos.ai",
+      photoURL: null,
+    } as unknown as User);
+    setLoading(false);
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (user?.uid === "hackathon-demo-user") return; // preserve mock session
       setUser(currentUser);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   return React.createElement(
     AuthContext.Provider,
@@ -62,6 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         signInWithGoogle,
         signOutUser,
+        signInMockUser,
       },
     },
     children

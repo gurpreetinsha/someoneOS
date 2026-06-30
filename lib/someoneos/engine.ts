@@ -1,5 +1,5 @@
 import { UnderstandingResult } from "@/types/understanding";
-import { MemoryExtractionResult } from "@/lib/memory/types/memory";
+import { MemoryExtractionResult, MemoryItem } from "@/lib/memory/types/memory";
 import { PlanResult } from "@/lib/planner/types/planner";
 import { extractMemory } from "@/lib/memory/memoryEngine";
 import { createPlan } from "@/lib/planner/planner";
@@ -8,6 +8,7 @@ import { buildPlanningContext } from "@/lib/domain/normalizer";
 export interface SomeoneOSInput {
   understanding: UnderstandingResult;
   clarificationAnswers: Record<string, string>;
+  historicalMemories?: MemoryItem[];
 }
 
 export interface SomeoneOSResult {
@@ -22,7 +23,26 @@ export interface SomeoneOSResult {
  */
 export function runSomeoneOS(input: SomeoneOSInput): SomeoneOSResult {
   // Stage 1: Memory Extraction
-  const memory = extractMemory(input.understanding);
+  const currentMemory = extractMemory(input.understanding);
+
+  // Merge historical and new memories
+  const allMemories = [...(input.historicalMemories || [])];
+  const memoryMap = new Map<string, MemoryItem>();
+  for (const m of allMemories) {
+    memoryMap.set(m.id, m);
+  }
+  for (const m of currentMemory.memories) {
+    const existing = memoryMap.get(m.id);
+    if (!existing || m.confidence > existing.confidence) {
+      memoryMap.set(m.id, m);
+    }
+  }
+  const mergedMemories = Array.from(memoryMap.values());
+  const memory: MemoryExtractionResult = {
+    memories: mergedMemories,
+    extractedCount: mergedMemories.length,
+    timestamp: new Date().toISOString(),
+  };
 
   // Stage 1.5: Build Upstream Domain PlanningContext
   const context = buildPlanningContext({

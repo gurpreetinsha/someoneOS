@@ -1,4 +1,5 @@
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { DemoSignInButton } from "@/components/DemoSignInButton";
 import { Sparkles, Command } from "lucide-react";
 
 export default function Home() {
@@ -41,8 +42,9 @@ export default function Home() {
           </p>
 
           {/* Action Button */}
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <GoogleSignInButton />
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <DemoSignInButton />
+            <GoogleSignInButton text="Sign in with Google" className="rounded-full px-8 py-6 text-base font-medium shadow-md transition-all hover:shadow-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-800" />
           </div>
         </div>
 
