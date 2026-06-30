@@ -1,11 +1,12 @@
 "use client";
  
-import React, { useState } from "react";
-import { PlanResult, TaskPriority } from "@/lib/planner/types/planner";
+import React, { useState, useEffect } from "react";
+import { PlanResult, TaskPriority, Task } from "@/lib/planner/types/planner";
 import { UnderstandingResult } from "@/types/understanding";
 import { MemoryItem } from "@/lib/memory/types/memory";
 import { FailurePredictionResult } from "@/lib/someoneos/failurePrediction";
 import { ScheduleNegotiationResult } from "@/lib/someoneos/scheduleNegotiator";
+import { useAuth } from "@/lib/auth";
 import {
   AlertTriangle,
   HelpCircle,
@@ -24,6 +25,9 @@ import {
   Brain,
   TrendingDown,
   Info,
+  Calendar,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
  
 interface ExecutionPreviewProps {
@@ -49,6 +53,121 @@ const getPriorityColor = (priority: TaskPriority) => {
   }
 };
  
+const loadingMessages = [
+  "Creating calendar events...",
+  "Reserving focus blocks...",
+  "Negotiating your day...",
+  "Synchronizing with Google Calendar...",
+  "Almost done...",
+];
+
+interface ScheduledSlot {
+  time: string;
+  type: "anchor" | "task";
+  title: string;
+  priority?: TaskPriority;
+  icon?: React.ComponentType<{ className?: string }>;
+  color?: string;
+  start: Date;
+  end: Date;
+  task?: Task;
+}
+
+const getScheduledBlocks = (plan: PlanResult | null): ScheduledSlot[] => {
+  if (!plan) return [];
+
+  const blocks: ScheduledSlot[] = [];
+  const baseDate = new Date();
+
+  // 1. Routine Anchor (8:00 AM - 9:00 AM)
+  const routineStart = new Date(baseDate);
+  routineStart.setHours(8, 0, 0, 0);
+  const routineEnd = new Date(baseDate);
+  routineEnd.setHours(9, 0, 0, 0);
+  blocks.push({
+    time: "08:00 AM",
+    type: "anchor",
+    title: "Routine: Drop kids at school",
+    icon: CalendarDays,
+    color: "bg-blue-50/70 border-blue-100 text-blue-700",
+    start: routineStart,
+    end: routineEnd,
+  });
+
+  // 2. Physical Break Anchor (1:00 PM - 2:00 PM)
+  const breakStart = new Date(baseDate);
+  breakStart.setHours(13, 0, 0, 0);
+  const breakEnd = new Date(baseDate);
+  breakEnd.setHours(14, 0, 0, 0);
+  const breakBlock: ScheduledSlot = {
+    time: "01:00 PM",
+    type: "anchor",
+    title: "Physical Break: Back stretches (Lower back care)",
+    icon: AlertCircle,
+    color: "bg-rose-50/75 border-rose-100 text-rose-700",
+    start: breakStart,
+    end: breakEnd,
+  };
+
+  // 3. Event Anchor (2:00 PM - 3:00 PM)
+  const eventStart = new Date(baseDate);
+  eventStart.setHours(14, 0, 0, 0);
+  const eventEnd = new Date(baseDate);
+  eventEnd.setHours(15, 0, 0, 0);
+  const eventBlock: ScheduledSlot = {
+    time: "02:00 PM",
+    type: "anchor",
+    title: "Event: Meta Interview (Wed Anchor)",
+    icon: Sparkles,
+    color: "bg-purple-50/70 border-purple-100 text-purple-700 font-bold",
+    start: eventStart,
+    end: eventEnd,
+  };
+
+  // Schedule tasks sequentially starting from 9:00 AM
+  let currentStart = new Date(baseDate);
+  currentStart.setHours(9, 0, 0, 0);
+
+  const formatTimeAMPM = (date: Date) => {
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const strMinutes = String(minutes).padStart(2, "0");
+    return `${hours}:${strMinutes} ${ampm}`;
+  };
+
+  plan.tasks.forEach((task) => {
+    // Shift task start past the afternoon anchors if it overlaps
+    if (currentStart.getHours() >= 13 && currentStart.getHours() < 15) {
+      currentStart.setHours(15, 0, 0, 0);
+    }
+
+    const start = new Date(currentStart);
+    const durationMinutes = task.estimatedMinutes || 60;
+    const end = new Date(currentStart.getTime() + durationMinutes * 60 * 1000);
+
+    currentStart = new Date(end.getTime());
+
+    blocks.push({
+      time: formatTimeAMPM(start),
+      type: "task",
+      title: task.title,
+      priority: task.priority,
+      start,
+      end,
+      task,
+    });
+  });
+
+  blocks.push(breakBlock);
+  blocks.push(eventBlock);
+  blocks.sort((a, b) => a.start.getTime() - b.start.getTime());
+
+  return blocks;
+};
+
 export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
   plan,
   understanding,
@@ -66,6 +185,130 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
   const [simRunning, setSimRunning] = useState(false);
   const [simLogs, setSimLogs] = useState<string[]>([]);
   const [simStatus, setSimStatus] = useState<"idle" | "running" | "collision" | "repairing" | "stable">("idle");
+
+  // Google Calendar Integration States & Handlers
+  const { signInWithGoogle } = useAuth();
+  const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "success" | "error_permission" | "error_expired" | "error_api">("idle");
+  const [loadingMessage, setLoadingMessage] = useState("Creating calendar events...");
+  const [createdEventsCount, setCreatedEventsCount] = useState(0);
+
+  useEffect(() => {
+    if (syncStatus !== "syncing") return;
+
+    let index = 0;
+    setLoadingMessage(loadingMessages[0]);
+
+    const interval = setInterval(() => {
+      index = (index + 1) % loadingMessages.length;
+      setLoadingMessage(loadingMessages[index]);
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [syncStatus]);
+
+  const handleApplyStrategy = async () => {
+    const token = sessionStorage.getItem("google_access_token");
+    if (!token) {
+      setSyncStatus("error_permission");
+      return;
+    }
+
+    setSyncStatus("syncing");
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+
+    const formatLocalISO = (date: Date) => {
+      const pad = (num: number) => String(num).padStart(2, "0");
+      const yyyy = date.getFullYear();
+      const MM = pad(date.getMonth() + 1);
+      const dd = pad(date.getDate());
+      const hh = pad(date.getHours());
+      const mm = pad(date.getMinutes());
+      const ss = pad(date.getSeconds());
+      return `${yyyy}-${MM}-${dd}T${hh}:${mm}:${ss}`;
+    };
+
+    const tasksToSync = scheduleSlots.filter((slot) => slot.type === "task");
+    const eventsToCreate = tasksToSync.map((block) => {
+      const task = block.task;
+      const description = [
+        "Generated by SomeoneOS",
+        `Priority: ${block.priority}`,
+        `Reason: ${task?.reason || "N/A"}`,
+        failurePrediction?.successProbability 
+          ? `Success Forecast: ${failurePrediction.successProbability}% success probability`
+          : "Success Forecast: N/A"
+      ].join("\n");
+
+      return {
+        summary: block.title,
+        description,
+        start: {
+          dateTime: formatLocalISO(block.start),
+          timeZone: timezone,
+        },
+        end: {
+          dateTime: formatLocalISO(block.end),
+          timeZone: timezone,
+        },
+      };
+    });
+
+    try {
+      const insertPromises = eventsToCreate.map(async (event) => {
+        const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(event),
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error("TOKEN_EXPIRED");
+          }
+          if (res.status === 403) {
+            throw new Error("PERMISSION_DENIED");
+          }
+          throw new Error("API_ERROR");
+        }
+
+        return res.json();
+      });
+
+      await Promise.all(insertPromises);
+      setCreatedEventsCount(eventsToCreate.length);
+      setSyncStatus("success");
+    } catch (err: unknown) {
+      console.error("Google Calendar sync error:", err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errMsg === "TOKEN_EXPIRED") {
+        setSyncStatus("error_expired");
+      } else if (errMsg === "PERMISSION_DENIED") {
+        setSyncStatus("error_permission");
+      } else {
+        setSyncStatus("error_api");
+      }
+    }
+  };
+
+  const handleSignInAndRetry = async () => {
+    try {
+      await signInWithGoogle();
+      const token = sessionStorage.getItem("google_access_token");
+      if (token) {
+        setSyncStatus("idle");
+        setTimeout(() => {
+          handleApplyStrategy();
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Re-authentication failed:", error);
+      setSyncStatus("error_permission");
+    }
+  };
 
   if (!plan) {
     return (
@@ -106,14 +349,8 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
     );
   }
 
-  // Timeline Hour blocks helper
-  const scheduleSlots = [
-    { time: "08:00 AM", type: "anchor", title: "Routine: Drop kids at school", icon: CalendarDays, color: "bg-blue-50/70 border-blue-100 text-blue-700" },
-    { time: "09:30 AM", type: "task", title: plan.tasks[0]?.title || "Buy groceries today", priority: plan.tasks[0]?.priority || "high" },
-    { time: "11:00 AM", type: "task", title: plan.tasks[1]?.title || "Review graph problems", priority: plan.tasks[1]?.priority || "medium" },
-    { time: "01:00 PM", type: "anchor", title: "Physical Break: Back stretches (Lower back care)", icon: AlertCircle, color: "bg-rose-50/75 border-rose-100 text-rose-700" },
-    { time: "02:00 PM", type: "anchor", title: "Event: Meta Interview (Wed Anchor)", icon: Sparkles, color: "bg-purple-50/70 border-purple-100 text-purple-700 font-bold" },
-  ];
+  // Timeline Hour blocks helper computed dynamically
+  const scheduleSlots = getScheduledBlocks(plan);
 
   // 5-Day Simulation Steps
   const runSimulation = () => {
@@ -205,6 +442,129 @@ export const ExecutionPreview: React.FC<ExecutionPreviewProps> = ({
             <span>Plan Synced • Aligned with {memories.length} Memories</span>
           </div>
         )}
+      </div>
+
+      {/* Google Calendar Action Engine Card */}
+      <div className="rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950 via-neutral-900 to-slate-950 text-white p-6 sm:p-8 shadow-xl flex flex-col gap-5 relative overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="absolute top-0 right-1/4 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-indigo-500/20 pb-4 gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-md">
+              <Calendar className="h-4.5 w-4.5 text-indigo-100" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-sm font-extrabold tracking-tight uppercase">
+                Google Calendar Action Engine
+              </h3>
+              <p className="text-[10px] text-indigo-200 font-medium">
+                Direct deployment of recommended focus strategy into your daily routine
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="text-left max-w-xl">
+            <p className="text-xs text-neutral-300 leading-relaxed font-semibold">
+              Ready to execute this cognitive plan? Sync it instantly to your Google Calendar as individual focus blocks structured by priority and behavior multipliers.
+            </p>
+          </div>
+
+          <div className="w-full lg:w-auto flex-shrink-0">
+            {syncStatus === "idle" && (
+              <button
+                onClick={handleApplyStrategy}
+                id="apply-strategy-btn"
+                className="w-full lg:w-auto px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-extrabold text-xs uppercase tracking-wider transition-all shadow-lg hover:shadow-indigo-600/30 flex items-center justify-center gap-2"
+              >
+                Apply Recommended Strategy
+              </button>
+            )}
+
+            {syncStatus === "syncing" && (
+              <div className="flex items-center gap-3 bg-neutral-800/80 px-5 py-3.5 rounded-2xl border border-neutral-700/50">
+                <Loader2 className="h-4 w-4 text-indigo-400 animate-spin" />
+                <span className="text-xs font-bold text-neutral-200 animate-pulse tracking-wide font-mono">
+                  {loadingMessage}
+                </span>
+              </div>
+            )}
+
+            {syncStatus === "success" && (
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="text-left bg-emerald-950/60 border border-emerald-500/20 px-4 py-2.5 rounded-2xl flex items-center gap-2.5">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-emerald-200">✅ Strategy Applied</span>
+                    <span className="text-[10px] text-emerald-400">Created {createdEventsCount} events successfully.</span>
+                  </div>
+                </div>
+                <a
+                  href="https://calendar.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-neutral-850 hover:bg-neutral-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-neutral-700/60 shadow-sm"
+                >
+                  Open Google Calendar
+                  <ExternalLink className="h-3 w-3 text-neutral-400" />
+                </a>
+              </div>
+            )}
+
+            {syncStatus === "error_permission" && (
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="text-left bg-rose-950/60 border border-rose-500/20 px-4 py-2.5 rounded-2xl flex items-start gap-2.5 max-w-sm">
+                  <AlertTriangle className="h-5 w-5 text-rose-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-rose-200">Calendar permission required.</span>
+                    <span className="text-[10px] text-rose-400 leading-normal">Please sign in again to enable Calendar Sync.</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleSignInAndRetry}
+                  className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs uppercase tracking-wider transition-colors shadow-md"
+                >
+                  Sign in with Google
+                </button>
+              </div>
+            )}
+
+            {syncStatus === "error_expired" && (
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="text-left bg-rose-950/60 border border-rose-500/20 px-4 py-2.5 rounded-2xl flex items-start gap-2.5">
+                  <AlertTriangle className="h-5 w-5 text-rose-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-rose-200">Session expired.</span>
+                    <span className="text-[10px] text-rose-400 leading-normal">Please sign in again.</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleSignInAndRetry}
+                  className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs uppercase tracking-wider transition-colors shadow-md"
+                >
+                  Sign in with Google
+                </button>
+              </div>
+            )}
+
+            {syncStatus === "error_api" && (
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="text-left bg-rose-950/60 border border-rose-500/20 px-4 py-2.5 rounded-2xl flex items-center gap-2.5">
+                  <AlertTriangle className="h-5 w-5 text-rose-400 flex-shrink-0" />
+                  <span className="text-xs font-bold text-rose-200">Unable to sync calendar.</span>
+                </div>
+                <button
+                  onClick={handleApplyStrategy}
+                  className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider transition-colors shadow-md"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Success Forecast Card (Visually Dominant) */}

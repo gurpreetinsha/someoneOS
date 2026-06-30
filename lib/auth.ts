@@ -5,7 +5,8 @@ import {
   User, 
   signInWithPopup, 
   signOut as firebaseSignOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  GoogleAuthProvider 
 } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
 
@@ -27,7 +28,11 @@ const AuthContext = createContext<AuthContextType>({
 
 export const signInWithGoogle = async (): Promise<void> => {
   try {
-    await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    if (credential && credential.accessToken) {
+      sessionStorage.setItem("google_access_token", credential.accessToken);
+    }
   } catch (error) {
     console.error("Error signing in with Google:", error);
     throw error;
