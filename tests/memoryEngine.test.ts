@@ -1,6 +1,6 @@
-import { extractMemory } from "./memoryEngine";
+import { extractMemory } from "@/lib/memory/memoryEngine";
 import { UnderstandingResult } from "@/types/understanding";
-import { MemoryExtractionResult } from "./types/memory";
+import { MemoryExtractionResult } from "@/lib/memory/types/memory";
 
 interface TestCase {
   name: string;
@@ -313,5 +313,4 @@ export function runTests(): boolean {
   return failedCount === 0;
 }
 
-// Execute tests if run directly via ts-node / npx tsx
 runTests();

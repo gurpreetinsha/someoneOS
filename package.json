@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "tsx tests/plannerEvaluation.ts && tsx tests/memoryEngine.test.ts && tsx tests/planner.test.ts && tsx tests/failurePrediction.test.ts",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -33,6 +34,7 @@
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "tailwindcss": "^3.4.14",
+    "tsx": "^4.19.1",
     "typescript": "^5.6.3"
   }
 }

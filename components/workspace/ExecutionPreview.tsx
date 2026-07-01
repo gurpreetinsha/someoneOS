@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import { PlanResult, TaskPriority, Task } from "@/lib/planner/types/planner";
 import { UnderstandingResult } from "@/types/understanding";
 import { MemoryItem } from "@/lib/memory/types/memory";
-import { FailurePredictionResult } from "@/lib/someoneos/failurePrediction";
-import { ScheduleNegotiationResult } from "@/lib/someoneos/scheduleNegotiator";
+import { FailurePredictionResult } from "@/lib/orchestrator/failurePrediction";
+import { ScheduleNegotiationResult } from "@/lib/orchestrator/scheduleNegotiator";
 import { useAuth } from "@/lib/auth";
 import {
   AlertTriangle,

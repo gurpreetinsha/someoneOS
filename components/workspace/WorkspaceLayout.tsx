@@ -11,7 +11,7 @@ import { ExecutionSidebar } from "./ExecutionSidebar";
 import { useExtraction } from "@/hooks/useExtraction";
 import { ExecutionState } from "@/types/extraction";
 import { UnderstandingResult } from "@/types/understanding";
-import { runSomeoneOS, SomeoneOSResult } from "@/lib/someoneos/engine";
+import { runSomeoneOS, SomeoneOSResult } from "@/lib/orchestrator/engine";
 import { MemoryItem } from "@/lib/memory/types/memory";
 import { useAuth } from "@/lib/auth";
 import { AlertCircle, RefreshCw, Trash2 } from "lucide-react";

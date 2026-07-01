@@ -1,5 +1,5 @@
-import { createPlan } from "./planner";
-import { PlanResult } from "./types/planner";
+import { createPlan } from "@/lib/planner/planner";
+import { PlanResult } from "@/lib/planner/types/planner";
 import { buildPlanningContext } from "@/lib/domain/normalizer";
 import { UnderstandingResult } from "@/types/understanding";
 import { MemoryExtractionResult } from "@/lib/memory/types/memory";
@@ -333,7 +333,7 @@ const testCases: TestCase[] = [
   },
   {
     name: "TC21: Deduplication of Candidate Tasks",
-    description: "Identical work items in priorities and rawText are deduplicated cleanly",
+    description: "Cleanly deduplicates duplicate items across priorities and text",
     input: {
       understanding: {
         rawText: "Finish report. Finish report.",

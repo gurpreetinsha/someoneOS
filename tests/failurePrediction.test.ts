@@ -1,6 +1,6 @@
-import { calculateFailurePrediction, FailurePredictionResult } from "./failurePrediction";
-import { PlanningContext } from "../domain/types";
-import { PlanResult } from "../planner/types/planner";
+import { calculateFailurePrediction, FailurePredictionResult } from "@/lib/orchestrator/failurePrediction";
+import { PlanningContext } from "@/lib/domain/types";
+import { PlanResult } from "@/lib/planner/types/planner";
 
 interface TestCase {
   name: string;
